@@ -152,6 +152,15 @@ namespace PerformanceCalculator.View
             string statMode = ((ComboBoxItem)cmbBoxStatMethod.SelectedItem).Content.ToString();
             if (table != null) DisplayData(statMode);
         }
+
+        private void FillGuiWithExampleData(object sender, RoutedEventArgs e)
+        {
+            txtForecastPath.Text = @".\Data\SampleForecasts";
+            txtObsevationsPath.Text = @".\Data\SampleObservations.csv";
+            txtForecastColTimeIndex.Text = "1";
+            txtForecastColValueIndex.Text = "5";
+            txtNormalizationValue.Text = "207000";
+        }
         //C:\aquiloz\awpp\awpp\Aquiloz.Service.PowerPrediction.Test\bin\Debug\Roedsand_2\2014
         //C:\Dump\Rodsand\MeasuredMay-June.csv
     }
