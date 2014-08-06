@@ -21,6 +21,7 @@ namespace PerformanceCalculator
             string dateTimePattern = string.Empty;
             foreach (var line in obsLines.Skip(1)) // Skip the heading...
             {
+                if(!line.Contains(omd.ObservationSep)) throw new Exception("Observations series does not contain the char: '"+omd.ObservationSep+"' \ras column seperator. Open the document and check what \rdelimiter char is used to seperate the columns \rand specify this char in the Observations Column Seperator field.");
                 var cols = line.Split(omd.ObservationSep);
                 string timeStampStr = cols[omd.ObservationTimeIndex];
                 string valueStr = cols[omd.ObservationValueIndex];
@@ -59,6 +60,7 @@ namespace PerformanceCalculator
                     string line = reader.ReadLine();
                     if (lineNr == -1)
                     {
+                        if (!line.Contains(fmd.ForecastSep)) throw new Exception("Forecast series does not contain the char: '" + fmd.ForecastSep + "' \ras column seperator. Open a document and check what \rdelimiter char is used to seperate the columns \rand specify this char in the Forecasts Column Seperator field.");
                         lineNr++;
                         continue;
                     }

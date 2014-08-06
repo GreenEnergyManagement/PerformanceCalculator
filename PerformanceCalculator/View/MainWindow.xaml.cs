@@ -100,7 +100,7 @@ namespace PerformanceCalculator.View
                     {
                         string colName = s;
                         if (col == 0) colName = "Hour Ahead";
-                        else if (col == 1) colName = "Method";
+                        else if (col == 1) colName = "Metric";
                         else
                         {
                             var dateParts = colName.Split('/');

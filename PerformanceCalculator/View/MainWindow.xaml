@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Performance Calculator" Height="682" Width="1536">
     <Grid Margin="0,0,-8,-21" RenderTransformOrigin="0.498,0.87">
-        <Rectangle Fill="#FFF4F4F5" HorizontalAlignment="Left" Height="96" Margin="7,6,0,0" Stroke="Black" VerticalAlignment="Top" Width="1507"/>
+        <Rectangle Fill="#FFF4F4F5" Height="96" Margin="7,6,0,0" Stroke="Black" VerticalAlignment="Top" Width="1507" HorizontalAlignment="Left"/>
         <Label Content="Forecast Path:" HorizontalAlignment="Left" Margin="9,6,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="txtForecastPath" Height="23" Margin="163,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="561" HorizontalAlignment="Left"/>
         <Label Content="Observastions File:" HorizontalAlignment="Left" Margin="789,7,0,0" VerticalAlignment="Top"/>
@@ -20,7 +20,7 @@
         <TextBox x:Name="txtObservationColSeparator" HorizontalAlignment="Left" Height="23" Margin="1336,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="33" Text=";"/>
         <Label Content="Column Index Value:" HorizontalAlignment="Left" Margin="1021,35,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="txtObservationColValueIndex" HorizontalAlignment="Left" Height="23" Margin="1140,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="32" Text="1"/>
-        <Button Content="Calculate" HorizontalAlignment="Left" Margin="1439,108,0,0" VerticalAlignment="Top" Width="75" Click="Calculate"/>
+        <Button Content="Calculate" HorizontalAlignment="Right" Margin="0,108,11,0" VerticalAlignment="Top" Width="75" Click="Calculate"/>
         <ComboBox x:Name="obsevationsUnitType" HorizontalAlignment="Left" Margin="1448,39,0,0" VerticalAlignment="Top" Width="56" SelectedIndex="0">
             <ComboBoxItem Content="kW" HorizontalAlignment="Left" Width="46"/>
             <ComboBoxItem Content="MW" HorizontalAlignment="Left" Width="46"/>
