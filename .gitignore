@@ -6,3 +6,5 @@ obj
 PerformanceCalculator\bin*/
 PerformanceCalculator\obj*/
 PerformanceCalculator/bin/Debug/PerformanceCalculator.exe
+PerformanceCalculator\obj\Debug*/
+PerformanceCalculator/obj/Debug/PerformanceCalculator.csproj.FileListAbsolute.txt
