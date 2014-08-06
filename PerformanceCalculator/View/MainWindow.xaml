@@ -1,0 +1,51 @@
+﻿<Window x:Class="PerformanceCalculator.View.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Performance Calculator" Height="682" Width="1536">
+    <Grid Margin="0,0,-8,-21" RenderTransformOrigin="0.498,0.87">
+        <Rectangle Fill="#FFF4F4F5" HorizontalAlignment="Left" Height="96" Margin="7,6,0,0" Stroke="Black" VerticalAlignment="Top" Width="1507"/>
+        <Label Content="Forecast Path:" HorizontalAlignment="Left" Margin="9,6,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtForecastPath" Height="23" Margin="163,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="561" HorizontalAlignment="Left"/>
+        <Label Content="Observastions File:" HorizontalAlignment="Left" Margin="789,7,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtObsevationsPath" HorizontalAlignment="Left" Height="23" Margin="943,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="561"/>
+        <Label Content="Column Index TimeStamp:" HorizontalAlignment="Left" Margin="9,35,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtForecastColTimeIndex" HorizontalAlignment="Left" Height="23" Margin="163,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="27" Text="0"/>
+        <Label Content="Column seperator:" HorizontalAlignment="Left" Margin="444,35,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtForecastColSeparator" HorizontalAlignment="Left" Height="23" Margin="556,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="33" Text=";"/>
+        <Label Content="Column Index Value:" HorizontalAlignment="Left" Margin="241,35,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtForecastColValueIndex" HorizontalAlignment="Left" Height="23" Margin="360,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="32" Text="1"/>
+        <Label Content="Column Index TimeStamp:" HorizontalAlignment="Left" Margin="789,35,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtObservationColTimeIndex" HorizontalAlignment="Left" Height="23" Margin="943,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="27" Text="0"/>
+        <Label Content="Column seperator:" HorizontalAlignment="Left" Margin="1224,35,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtObservationColSeparator" HorizontalAlignment="Left" Height="23" Margin="1336,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="33" Text=";"/>
+        <Label Content="Column Index Value:" HorizontalAlignment="Left" Margin="1021,35,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtObservationColValueIndex" HorizontalAlignment="Left" Height="23" Margin="1140,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="32" Text="1"/>
+        <Button Content="Calculate" HorizontalAlignment="Left" Margin="1439,108,0,0" VerticalAlignment="Top" Width="75" Click="Calculate"/>
+        <ComboBox x:Name="obsevationsUnitType" HorizontalAlignment="Left" Margin="1448,39,0,0" VerticalAlignment="Top" Width="56" SelectedIndex="0">
+            <ComboBoxItem Content="kW" HorizontalAlignment="Left" Width="46"/>
+            <ComboBoxItem Content="MW" HorizontalAlignment="Left" Width="46"/>
+        </ComboBox>
+        <Label Content="Unit:" HorizontalAlignment="Left" Margin="1408,35,0,0" VerticalAlignment="Top"/>
+        <ComboBox x:Name="forecastUnitType" HorizontalAlignment="Left" Margin="668,39,0,0" VerticalAlignment="Top" Width="56" SelectedIndex="0">
+            <ComboBoxItem Content="kW" HorizontalAlignment="Left" Width="46"/>
+            <ComboBoxItem Content="MW" HorizontalAlignment="Left" Width="46"/>
+        </ComboBox>
+        <Label Content="Unit:" HorizontalAlignment="Left" Margin="628,35,0,0" VerticalAlignment="Top"/>
+        <Label Content="Hours Ahead Offset:" HorizontalAlignment="Left" Margin="10,62,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtHoursAheadOffset" HorizontalAlignment="Left" Height="23" Margin="163,66,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="27"/>
+        <Label Content="Normalization Value:" HorizontalAlignment="Left" Margin="789,62,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtNormalizationValue" HorizontalAlignment="Left" Height="23" Margin="943,66,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="71"/>
+        <Label Content="(E.g. Installed Capacity)" HorizontalAlignment="Left" Margin="1008,62,0,0" VerticalAlignment="Top"/>
+        <DataGrid x:Name="grid" Margin="10,134,22,30" CanUserAddRows="False" CanUserResizeColumns="True" CanUserSortColumns="True" IsReadOnly="True"
+                  AutoGenerateColumns="True" />
+        <ComboBox x:Name="cmbBoxStatMethod" HorizontalAlignment="Left" Margin="10,107,0,0" VerticalAlignment="Top" Width="75"  SelectedIndex="2" SelectionChanged="DisplayDataForStatMode">
+            <ComboBoxItem Content="MFE"/>
+            <ComboBoxItem Content="MAE"/>
+            <ComboBoxItem Content="MAPE"/>
+            <ComboBoxItem Content="MSE"/>
+            <ComboBoxItem Content="RMSE"/>
+            <ComboBoxItem Content="RMSPE"/>
+        </ComboBox>
+
+    </Grid>
+</Window>

@@ -1,0 +1,13 @@
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\bin\Debug\PerformanceCalculator.exe.config
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\bin\Debug\PerformanceCalculator.exe
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\bin\Debug\PerformanceCalculator.pdb
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.csprojResolveAssemblyReference.cache
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\App.g.cs
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator_MarkupCompile.cache
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.g.resources
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.Properties.Resources.resources
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.csproj.GenerateResource.Cache
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.exe
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.pdb
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\View\MainWindow.baml
+c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\View\MainWindow.g.cs
