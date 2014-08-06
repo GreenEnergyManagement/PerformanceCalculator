@@ -11,3 +11,6 @@ c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\Per
 c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.pdb
 c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\View\MainWindow.baml
 c:\users\steinar\documents\visual studio 2013\Projects\PerformanceCalculator\PerformanceCalculator\obj\Debug\View\MainWindow.g.cs
+C:\aquiloz\PerformanceCalculator\PerformanceCalculator\bin\Debug\PerformanceCalculator.exe.config
+C:\aquiloz\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.exe
+C:\aquiloz\PerformanceCalculator\PerformanceCalculator\obj\Debug\PerformanceCalculator.pdb
