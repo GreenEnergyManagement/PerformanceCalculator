@@ -10,7 +10,7 @@ namespace PerformanceCalculator
 {
     public static class PerformanceCalculatorEngine
     {
-        public static ConcurrentDictionary<UtcDateTime, HourlySkillScoreCalculator> Calculate(ForecastMetaData fmd, DirectoryInfo path, ObservationMetaData omd, string file)
+        public static ConcurrentDictionary<UtcDateTime, HourlySkillScoreCalculator> Calculate(ForecastMetaData fmd, DirectoryInfo path, ObservationMetaData omd, string file, int[] scope)
         {
             var results = new ConcurrentDictionary<UtcDateTime, HourlySkillScoreCalculator>();
             bool isNotPointingToANumber = false;
@@ -91,7 +91,7 @@ namespace PerformanceCalculator
                 UtcDateTime first = predPowerInFarm.Keys.First();
                 var firstTimePointInMonth = new UtcDateTime(first.Year, first.Month, 1);
                 if (!results.ContainsKey(firstTimePointInMonth))
-                    results.TryAdd(firstTimePointInMonth, new HourlySkillScoreCalculator(new List<Turbine>(), new[] { 0, 1, 2, 3, 4, 5, 6, 12, 18, 24, 30, 36, 48 }, (int)omd.NormalizationValue));
+                    results.TryAdd(firstTimePointInMonth, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int)omd.NormalizationValue));
 
                 HourlySkillScoreCalculator skillCalculator = results[firstTimePointInMonth];
                 var enumer = new UtcDateTimeEnumerator(first, predPowerInFarm.Keys.Last(), TimeResolution.Hour);

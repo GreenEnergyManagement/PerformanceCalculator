@@ -47,6 +47,8 @@
             <ComboBoxItem Content="RMSPE"/>
         </ComboBox>
         <Button Content="Example" HorizontalAlignment="Left" Margin="649,68,0,0" VerticalAlignment="Top" Width="75" Click="FillGuiWithExampleData"/>
+        <Label Content="Scope:" HorizontalAlignment="Left" Margin="241,62,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtScope" HorizontalAlignment="Left" Height="23" Margin="291,65,0,0" TextWrapping="Wrap" Text="0-6,12,18,24,30,36,48" VerticalAlignment="Top" Width="298"/>
 
     </Grid>
 </Window>

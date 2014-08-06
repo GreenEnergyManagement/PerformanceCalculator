@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -17,6 +19,8 @@ namespace PerformanceCalculator.View
 
         public MainWindow()
         {
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             InitializeComponent();
         }
 
@@ -41,10 +45,31 @@ namespace PerformanceCalculator.View
             {
                 try
                 {
+                    string scopeStr = txtScope.Text;
+                    string[] scopeSteps = scopeStr.Split(',');
+                    var scope = new List<int>();
+                    foreach (var scopeStep in scopeSteps)
+                    {
+                        var step = scopeStep.Trim();
+                        if (step.Contains("-"))
+                        {
+                            var firstAndLast = step.Split('-');
+                            int first = int.Parse(firstAndLast[0]);
+                            int last = int.Parse(firstAndLast[1]);
+                            int count = last - first;
+                            scope.AddRange(Enumerable.Range(first, count));
+                        }
+                        else
+                        {
+                            int nr = int.Parse(step);
+                            scope.Add(nr);
+                        }
+                    }
+
                     var fmd = new ForecastMetaData(forecastTimeIndex, forecastValueIndex, offsetHoursAhead, forecastSep, fcastUnitType);
                     var omd = new ObservationMetaData(observationTimeIndex, observationValueIndex, observationSep, obsUnitType, normValue);
 
-                    var result = PerformanceCalculatorEngine.Calculate(fmd, new DirectoryInfo(txtForecastPath.Text), omd, txtObsevationsPath.Text);
+                    var result = PerformanceCalculatorEngine.Calculate(fmd, new DirectoryInfo(txtForecastPath.Text), omd, txtObsevationsPath.Text, scope.ToArray());
 
                     table = new SortedDictionary<int, SortedDictionary<UtcDateTime, BinSkillScore>>();
                     foreach (var t in result.Keys)
@@ -120,8 +145,17 @@ namespace PerformanceCalculator.View
                 foreach (var data in line.Split('\t'))
                 {
                     string val = data;
-                    if (column > 1) val = val.Replace(',', '.');
-                    newRow[column] = val;
+                    if (column > 1)
+                    {
+                        val = val.Replace(',', '.');
+                        double value;
+                        if (double.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+                        {
+                            newRow[column] = value;
+                        }
+                        else throw new Exception("Unable to convert text: '"+val+"' to a double value.");
+                    }
+                    else newRow[column] = val;
                     column++;
                 }
                 dt.Rows.Add(newRow);
