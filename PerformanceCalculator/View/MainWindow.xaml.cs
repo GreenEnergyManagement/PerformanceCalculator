@@ -57,7 +57,7 @@ namespace PerformanceCalculator.View
                             int first = int.Parse(firstAndLast[0]);
                             int last = int.Parse(firstAndLast[1]);
                             int count = last - first;
-                            scope.AddRange(Enumerable.Range(first, count));
+                            scope.AddRange(Enumerable.Range(first, count+1));
                         }
                         else
                         {
