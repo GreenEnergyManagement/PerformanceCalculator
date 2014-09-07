@@ -140,8 +140,9 @@ namespace PerformanceCalculator
             }
         }
 
-        public void AddContinousSerie(UtcDateTimeEnumerator enumer, Dictionary<UtcDateTime, double> predictionFrames, Dictionary<UtcDateTime, double> productionFrames, Dictionary<int, int> hourScope)
+        public void AddContinousSerie(UtcDateTimeEnumerator enumer, SortedDictionary<UtcDateTime, double> predictionFrames, SortedDictionary<UtcDateTime, double> productionFrames)
         {
+            Dictionary<int, int> hourScope = Scope.ToDictionary(e => e, e => e);
             nrOfRegisteredForecastTimePoints++;
             double sumPower = 0;
             double sumObsPower = 0;
@@ -164,7 +165,7 @@ namespace PerformanceCalculator
                     sumPower += power;
                     sumObsPower += obsPower;
 
-                    skillScoreHourBins[Any].Register(obsPower, power);
+                    if(skillScoreHourBins.ContainsKey(Any)) skillScoreHourBins[Any].Register(obsPower, power);
 
                     int currentHour = currentTime.UtcTime.Hour;
                     if (hourScope.ContainsKey(currentHour))
