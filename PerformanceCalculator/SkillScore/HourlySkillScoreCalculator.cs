@@ -173,7 +173,7 @@ namespace PerformanceCalculator
                         int scopeHour = hourScope[currentHour];
                         if (skillScoreHourBins.ContainsKey(scopeHour))
                         {
-                            skillScoreHourBins[scopeHour].Register(power, obsPower);
+                            skillScoreHourBins[scopeHour].Register(obsPower, power);
                             regIndex++;
                         }
                     }

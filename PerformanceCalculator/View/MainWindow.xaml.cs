@@ -41,7 +41,17 @@ namespace PerformanceCalculator.View
             string obsUnitType = ((ComboBoxItem) obsevationsUnitType.SelectedItem).Content.ToString();
             string statMode = ((ComboBoxItem) cmbBoxStatMethod.SelectedItem).Content.ToString();
 
-            bool hasData = Directory.Exists(txtForecastPath.Text) && File.Exists(txtObsevationsPath.Text);
+            string filter = "*.csv";
+            string forecastPath = txtForecastPath.Text;
+            int index = forecastPath.IndexOf('*');
+            if (index != -1)
+            {
+                filter = forecastPath.Substring(index);
+                forecastPath = forecastPath.Substring(0, index);
+            }
+            string observationFilePath = txtObsevationsPath.Text;
+
+            bool hasData = Directory.Exists(forecastPath) && File.Exists(observationFilePath);
             if (hasData)
             {
                 try
@@ -67,10 +77,10 @@ namespace PerformanceCalculator.View
                         }
                     }
 
-                    var fmd = new ForecastMetaData(forecastTimeIndex, forecastValueIndex, offsetHoursAhead, forecastSep, fcastUnitType);
+                    var fmd = new ForecastMetaData(forecastTimeIndex, forecastValueIndex, offsetHoursAhead, forecastSep, fcastUnitType, filter);
                     var omd = new ObservationMetaData(observationTimeIndex, observationValueIndex, observationSep, obsUnitType, normValue);
 
-                    var result = PerformanceCalculatorEngine.Calculate(fmd, new DirectoryInfo(txtForecastPath.Text), omd, txtObsevationsPath.Text, scope.ToArray());
+                    var result = PerformanceCalculatorEngine.Calculate(fmd, new DirectoryInfo(forecastPath), omd, observationFilePath, scope.ToArray());
 
                     table = new SortedDictionary<int, SortedDictionary<UtcDateTime, BinSkillScore>>();
                     foreach (var t in result.Keys)

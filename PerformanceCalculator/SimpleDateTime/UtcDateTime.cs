@@ -40,8 +40,9 @@ namespace PerformanceCalculator
 
         public static UtcDateTime CreateFromUnspecifiedDateTime(DateTime unspecifiedTime)
         {
+            if (unspecifiedTime.Kind == DateTimeKind.Utc) return new UtcDateTime(unspecifiedTime);
             if (unspecifiedTime.Kind == DateTimeKind.Unspecified) return new UtcDateTime(DateTime.SpecifyKind(unspecifiedTime, DateTimeKind.Utc));
-            throw new Exception("Unable to create UtcDateTime instance from unspecif ied date time as the DateTimeKind is not set to unspecified and will not be converted to utc.");
+            throw new Exception("Unable to create UtcDateTime instance from unspecified date time as the DateTimeKind is not set to unspecified and will not be converted to utc.");
         }
 
         public UtcDateTime Subtract(TimeSpan span)
@@ -289,7 +290,7 @@ namespace PerformanceCalculator
         {
             string[] dateAndTimeParts = timeStampStr.Split(' ');
             bool hasTimeSeperator = false;
-            if (dateAndTimeParts.Length == 0)
+            if (dateAndTimeParts.Length == 1)
             {
                 dateAndTimeParts = timeStampStr.Split('T');
                 hasTimeSeperator = true;
@@ -324,8 +325,7 @@ namespace PerformanceCalculator
             string timePattern = string.Empty;
             if (timePart.Length < 3) timePattern = "HH";
             else if (timePart.Length < 6) timePattern = "HH:mm";
-            else if (timePart.Length < 9) timePattern = "HH:mm:ss";
-            else if (timePart.Length < 9) timePattern = "HH:mm:ss";
+            else if (timePart.Length < 10) timePattern = "HH:mm:ss";
             else timePattern = "HH:mm:ss.FFFFFFFK";
 
             string pattern = string.Empty;

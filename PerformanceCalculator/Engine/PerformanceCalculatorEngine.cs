@@ -29,7 +29,7 @@ namespace PerformanceCalculator
                 //01.05.2014 13:00
                 if(string.IsNullOrEmpty(dateTimePattern)) dateTimePattern = UtcDateTime.GetDateTimePattern(timeStampStr);
                 if (timeStampStr.EndsWith("(b)")) continue; // skip local time, all time series should be in UTC....
-                DateTime timeStamp = DateTime.ParseExact(timeStampStr, dateTimePattern, (IFormatProvider)CultureInfo.InvariantCulture, DateTimeStyles.None);
+                DateTime timeStamp = DateTime.ParseExact(timeStampStr, dateTimePattern, (IFormatProvider)CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
                 var dateTime = UtcDateTime.CreateFromUnspecifiedDateTime(timeStamp);
 
                 valueStr = valueStr.Replace(',', '.');
@@ -48,7 +48,9 @@ namespace PerformanceCalculator
 
             // 3. Search forecastPath for forecast documents...
             dateTimePattern = string.Empty;
-            FileInfo[] files = path.GetFiles("*.csv", SearchOption.AllDirectories);
+            string filter = "*.csv";
+            if (!string.IsNullOrEmpty(fmd.ForecastFileFilter)) filter = fmd.ForecastFileFilter;
+            FileInfo[] files = path.GetFiles(filter, SearchOption.AllDirectories);
 
             // If we only have one single forecast file, then this forecast file is usually 99% of the time a long
             // time series with continous time steps, meaning there are no overlaps. Usually, only the unique hours
@@ -73,6 +75,7 @@ namespace PerformanceCalculator
                         lineNr++;
                         continue;
                     }
+                    if(string.IsNullOrEmpty(line)) continue;
 
                     var cols = line.Split(fmd.ForecastSep);
                     string timeStampStr = cols[fmd.ForecastTimeIndex];
@@ -82,10 +85,10 @@ namespace PerformanceCalculator
                     if (string.IsNullOrEmpty(dateTimePattern)) dateTimePattern = UtcDateTime.GetDateTimePattern(timeStampStr);
                     if (timeStampStr.EndsWith("(b)")) continue; // skip local time, all time series should be in UTC....
                     DateTime timeStamp;
-                    bool ok = DateTime.TryParseExact(timeStampStr, dateTimePattern, CultureInfo.InvariantCulture, DateTimeStyles.None, out timeStamp);
+                    bool ok = DateTime.TryParseExact(timeStampStr, dateTimePattern, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out timeStamp);
                     if (!ok)
                     {
-                        ok = DateTime.TryParseExact(timeStampStr, dateTimePattern.Split(' ')[0], CultureInfo.InvariantCulture, DateTimeStyles.None, out timeStamp);
+                        ok = DateTime.TryParseExact(timeStampStr, dateTimePattern.Split(' ')[0], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out timeStamp);
                         if (!ok) throw new Exception(string.Format("Unable to parse time point: {0}, with format: {1}", timeStampStr, dateTimePattern.Split(' ')[0]));
                     }
                     var dateTime = UtcDateTime.CreateFromUnspecifiedDateTime(timeStamp);
@@ -102,16 +105,16 @@ namespace PerformanceCalculator
                 }
 
                 if (isNotPointingToANumber && predPowerInFarm.Count==0) throw new Exception("The Forecast Column Index Value is not pointing to a column which contains a double value. Change index value!");
-                predPowerInFarm = ConvertTimeSeriesToHourlyResolution(predPowerInFarm, dateTimePattern);
+                var convertedPredPowerInFarm = ConvertTimeSeriesToHourlyResolution(predPowerInFarm, dateTimePattern);
 
-                UtcDateTime first = predPowerInFarm.Keys.First();
+                UtcDateTime first = convertedPredPowerInFarm.Keys.First();
                 var firstTimePointInMonth = new UtcDateTime(first.Year, first.Month, 1);
                 
 
                 if (compareHoursInDay)
                 {
                     // Split up into months
-                    UtcDateTime last = predPowerInFarm.Keys.Last();
+                    UtcDateTime last = convertedPredPowerInFarm.Keys.Last();
                     var firstTimePointInLastMonth = new UtcDateTime(last.Year, last.Month, 1);
                     for (var time = firstTimePointInMonth; time.UtcTime <= firstTimePointInLastMonth.UtcTime; time = new UtcDateTime(time.UtcTime.AddMonths(1)))
                     {
@@ -120,7 +123,7 @@ namespace PerformanceCalculator
 
                         HourlySkillScoreCalculator skillCalculator = results[time];
                         var enumer = new UtcDateTimeEnumerator(time, new UtcDateTime(time.UtcTime.AddMonths(1)), TimeResolution.Hour);
-                        skillCalculator.AddContinousSerie(enumer, predPowerInFarm, obsPowerInFarm);
+                        skillCalculator.AddContinousSerie(enumer, convertedPredPowerInFarm, obsPowerInFarm);
                     }
                 }
                 else
@@ -129,8 +132,8 @@ namespace PerformanceCalculator
                         results.TryAdd(firstTimePointInMonth, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int)omd.NormalizationValue));
 
                     HourlySkillScoreCalculator skillCalculator = results[firstTimePointInMonth];
-                    var enumer = new UtcDateTimeEnumerator(first, predPowerInFarm.Keys.Last(), TimeResolution.Hour);
-                    skillCalculator.Add(enumer, predPowerInFarm, obsPowerInFarm, fmd.OffsetHoursAhead);
+                    var enumer = new UtcDateTimeEnumerator(first, convertedPredPowerInFarm.Keys.Last(), TimeResolution.Hour);
+                    skillCalculator.Add(enumer, convertedPredPowerInFarm, obsPowerInFarm, fmd.OffsetHoursAhead);
                 }
             }
 
@@ -165,16 +168,20 @@ namespace PerformanceCalculator
                 var lastPossibleHour = series.Keys.Last();
                 lastPossibleHour = new UtcDateTime(lastPossibleHour.Year, lastPossibleHour.Month, lastPossibleHour.Day, lastPossibleHour.Hour);
                 
-                return ProductionDataHelper.CalculateMarketResolutionAverage(firstPossibleHour, lastPossibleHour, TimeSpan.FromHours(1), span, series);
+                return ProductionDataHelper.CalculateMarketResolutionAverage(timePoints[0], firstPossibleHour, lastPossibleHour, TimeSpan.FromHours(1), span, series);
             }
             if (resolution == TimeResolutionType.Minute && steps == 15)
             {
                 // darn, typical market resolution, we need to calc hourly avg...
-                var firstHour = timePoints[0].AddHours(1);
+                var firstTimePoint = timePoints[0];
+                var firstHour = firstTimePoint.AddHours(1);
                 var firstPossibleHour = new UtcDateTime(firstHour.Year, firstHour.Month, firstHour.Day, firstHour.Hour);
-                var lastPossibleHour = series.Keys.Last().AddHours(-1);
-                lastPossibleHour = new UtcDateTime(lastPossibleHour.Year, lastPossibleHour.Month, lastPossibleHour.Day, lastPossibleHour.Hour);
-
+                var lastPossibleHour = series.Keys.Last();
+                if (lastPossibleHour.Minute > 0 || lastPossibleHour.Second > 0)
+                {
+                    lastPossibleHour = lastPossibleHour.AddHours(-1);
+                    lastPossibleHour = new UtcDateTime(lastPossibleHour.Year, lastPossibleHour.Month, lastPossibleHour.Day, lastPossibleHour.Hour);
+                }
                 /*var enumer = new UtcDateTimeEnumerator(firstPossibleHour, lastPossibleHour, TimeResolution.Hour);
                 foreach (var time in enumer)
                 {
@@ -182,7 +189,7 @@ namespace PerformanceCalculator
                     if (series.ContainsKey(time)) Console.WriteLine(time.UtcTime.ToString(dateTimePattern, CultureInfo.InvariantCulture) + ";" + series[time]); 
                 }*/
 
-                return ProductionDataHelper.CalculateMarketResolutionAverage(firstPossibleHour, lastPossibleHour, TimeSpan.FromHours(1), span, series);
+                return ProductionDataHelper.CalculateMarketResolutionAverage(firstTimePoint, firstPossibleHour, lastPossibleHour, TimeSpan.FromHours(1), span, series);
             }
             return new SortedDictionary<UtcDateTime, double>();
         }
@@ -190,17 +197,14 @@ namespace PerformanceCalculator
 
     public static class ProductionDataHelper
     {
-        internal static SortedDictionary<UtcDateTime, double> CalculateMarketResolutionAverage(
-            UtcDateTime first, UtcDateTime last,
-            TimeSpan marketResolution, TimeSpan dataResolution,
-            SortedDictionary<UtcDateTime, double> prod)
+        internal static SortedDictionary<UtcDateTime, double> CalculateMarketResolutionAverage(UtcDateTime firstTimePoint, UtcDateTime first, UtcDateTime last, TimeSpan marketResolution, TimeSpan dataResolution, SortedDictionary<UtcDateTime, double> prod)
         {
             int steps;
             TimeResolutionType timeResolutionType = dataResolution.ToTimeResolution(out steps);
 
             // Create TimePoints that we are interested to aggregate data on:
-            var time = last.Subtract(marketResolution);
-            var timePoints = new List<UtcDateTime> { last, time };
+            var time = last;//.Subtract(marketResolution);
+            var timePoints = new List<UtcDateTime> { last };
             do
             {
                 time = time.Subtract(marketResolution);
@@ -215,6 +219,21 @@ namespace PerformanceCalculator
                     UtcDateTime point = timePoints[index]; // this should be end time e.g 12:00
                     UtcDateTime prevPoint = timePoints[index + 1].Add(dataResolution); // this should be time resolution before, e.g. an hour, thus 11:00, but maybe adding data resolution e.g. 10.
 
+                    var enumer = new UtcDateTimeEnumerator(prevPoint, point, timeResolutionType, steps);
+                    foreach (UtcDateTime utcDateTime in enumer)
+                    {
+                        if (prod.ContainsKey(utcDateTime))
+                        {
+                            double production = prod[utcDateTime];
+                            if (!resolutionSamples.ContainsKey(point)) resolutionSamples.Add(point, new List<double>());
+                            resolutionSamples[point].Add(production);
+                        }
+                    }
+                }
+                else // This is for the last point...
+                {
+                    UtcDateTime point = timePoints[index]; // this should be end time e.g 12:00
+                    UtcDateTime prevPoint = timePoints[index].Subtract(marketResolution).Add(dataResolution); // this should be time resolution before, e.g. an hour, thus 11:00, but maybe adding data resolution e.g. 10.
                     var enumer = new UtcDateTimeEnumerator(prevPoint, point, timeResolutionType, steps);
                     foreach (UtcDateTime utcDateTime in enumer)
                     {
