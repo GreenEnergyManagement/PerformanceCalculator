@@ -43,8 +43,11 @@ namespace PerformanceCalculator
             }
 
             if (isNotPointingToANumber && obsPowerInFarm.Count == 0) throw new Exception("The Observation Column Index Value is not pointing to a column which contains a double value. Change index value!");
+            
+            
             // 2. Identify Time Resolution of obs series, if less than an hour, make it hourly avg.
-            obsPowerInFarm = ConvertTimeSeriesToHourlyResolution(obsPowerInFarm, dateTimePattern);
+            obsPowerInFarm = ConvertTimeSeriesToHourlyResolution(obsPowerInFarm);
+
 
             // 3. Search forecastPath for forecast documents...
             dateTimePattern = string.Empty;
@@ -105,7 +108,7 @@ namespace PerformanceCalculator
                 }
 
                 if (isNotPointingToANumber && predPowerInFarm.Count==0) throw new Exception("The Forecast Column Index Value is not pointing to a column which contains a double value. Change index value!");
-                var convertedPredPowerInFarm = ConvertTimeSeriesToHourlyResolution(predPowerInFarm, dateTimePattern);
+                var convertedPredPowerInFarm = ConvertTimeSeriesToHourlyResolution(predPowerInFarm);
 
                 UtcDateTime first = convertedPredPowerInFarm.Keys.First();
                 var firstTimePointInMonth = new UtcDateTime(first.Year, first.Month, 1);
@@ -149,7 +152,7 @@ namespace PerformanceCalculator
             return results;
         }
 
-        private static SortedDictionary<UtcDateTime, double> ConvertTimeSeriesToHourlyResolution(SortedDictionary<UtcDateTime, double> series, string dateTimePattern)
+        private static SortedDictionary<UtcDateTime, double> ConvertTimeSeriesToHourlyResolution(SortedDictionary<UtcDateTime, double> series)
         {
             var timePoints = series.Keys.Take(2).ToArray();
             TimeSpan span = timePoints[1].UtcTime - timePoints[0];
@@ -164,7 +167,9 @@ namespace PerformanceCalculator
             if (resolution == TimeResolutionType.Minute && steps == 10)
             {
                 // darn, typical scada resolution, we need to calc hourly avg...
-                var firstPossibleHour = timePoints[0].AddHours(1);
+                var firstTimePoint = timePoints[0];
+                var firstHour = firstTimePoint.AddHours(1);
+                var firstPossibleHour = new UtcDateTime(firstHour.Year, firstHour.Month, firstHour.Day, firstHour.Hour);
                 var lastPossibleHour = series.Keys.Last();
                 lastPossibleHour = new UtcDateTime(lastPossibleHour.Year, lastPossibleHour.Month, lastPossibleHour.Day, lastPossibleHour.Hour);
                 
@@ -192,85 +197,6 @@ namespace PerformanceCalculator
                 return ProductionDataHelper.CalculateMarketResolutionAverage(firstTimePoint, firstPossibleHour, lastPossibleHour, TimeSpan.FromHours(1), span, series);
             }
             return new SortedDictionary<UtcDateTime, double>();
-        }
-    }
-
-    public static class ProductionDataHelper
-    {
-        internal static SortedDictionary<UtcDateTime, double> CalculateMarketResolutionAverage(UtcDateTime firstTimePoint, UtcDateTime first, UtcDateTime last, TimeSpan marketResolution, TimeSpan dataResolution, SortedDictionary<UtcDateTime, double> prod)
-        {
-            int steps;
-            TimeResolutionType timeResolutionType = dataResolution.ToTimeResolution(out steps);
-
-            // Create TimePoints that we are interested to aggregate data on:
-            var time = last;//.Subtract(marketResolution);
-            var timePoints = new List<UtcDateTime> { last };
-            do
-            {
-                time = time.Subtract(marketResolution);
-                if (time >= first) timePoints.Add(time);
-            } while (time >= first);
-
-            var resolutionSamples = new SortedDictionary<UtcDateTime, List<double>>();
-            for (int index = 0; index < timePoints.Count; index++)
-            {
-                if (index + 1 < timePoints.Count)
-                {
-                    UtcDateTime point = timePoints[index]; // this should be end time e.g 12:00
-                    UtcDateTime prevPoint = timePoints[index + 1].Add(dataResolution); // this should be time resolution before, e.g. an hour, thus 11:00, but maybe adding data resolution e.g. 10.
-
-                    var enumer = new UtcDateTimeEnumerator(prevPoint, point, timeResolutionType, steps);
-                    foreach (UtcDateTime utcDateTime in enumer)
-                    {
-                        if (prod.ContainsKey(utcDateTime))
-                        {
-                            double production = prod[utcDateTime];
-                            if (!resolutionSamples.ContainsKey(point)) resolutionSamples.Add(point, new List<double>());
-                            resolutionSamples[point].Add(production);
-                        }
-                    }
-                }
-                else // This is for the last point...
-                {
-                    UtcDateTime point = timePoints[index]; // this should be end time e.g 12:00
-                    UtcDateTime prevPoint = timePoints[index].Subtract(marketResolution).Add(dataResolution); // this should be time resolution before, e.g. an hour, thus 11:00, but maybe adding data resolution e.g. 10.
-                    var enumer = new UtcDateTimeEnumerator(prevPoint, point, timeResolutionType, steps);
-                    foreach (UtcDateTime utcDateTime in enumer)
-                    {
-                        if (prod.ContainsKey(utcDateTime))
-                        {
-                            double production = prod[utcDateTime];
-                            if (!resolutionSamples.ContainsKey(point)) resolutionSamples.Add(point, new List<double>());
-                            resolutionSamples[point].Add(production);
-                        }
-                    }
-                }
-            }
-
-            int productionStepsInResolution = CalculateProductionStepsInResolution(marketResolution, dataResolution);
-            var avgProds = new SortedDictionary<UtcDateTime, double>();
-
-            foreach (UtcDateTime dateTime in resolutionSamples.Keys)
-            {
-                var prodInResolution = resolutionSamples[dateTime];
-                double avgPower = prodInResolution.Sum() / productionStepsInResolution;
-                avgProds.Add(dateTime, avgPower);
-            }
-            return avgProds;
-        }
-
-        private static int CalculateProductionStepsInResolution(TimeSpan resolution, TimeSpan dataResolution)
-        {
-            double productionStepsInResolutionD = resolution.TotalMinutes / dataResolution.TotalMinutes;
-            int productionStepsInResolution = (int)productionStepsInResolutionD;
-            double fraction = productionStepsInResolutionD - productionStepsInResolution;
-
-            if (fraction.AboutEqual(0.0)) return productionStepsInResolution;
-
-            if (fraction.AboutEqual(0.5)) productionStepsInResolution = 2;
-            else productionStepsInResolution = (int)dataResolution.TotalMinutes;
-
-            return productionStepsInResolution;
         }
     }
 }

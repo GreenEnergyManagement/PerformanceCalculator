@@ -76,6 +76,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Engine\ProductionDataHelper.cs" />
     <Compile Include="Util\DoubleExt.cs" />
     <Compile Include="Util\IRestrictedRange.cs" />
     <Compile Include="Util\Percent.cs" />
