@@ -1,9 +1,9 @@
-PerformanceCalculator
-=====================
+Performance Calculator
+======================
 
 Simple app to calculate the performance of any forecasting time series against a time series of observations.
 
-Download the PerformanceCalculator.zip and unzip it to a folder of choice (PerformanceCalculator) and execute PerformanceCalculator.exe to run the program.
+Download the [PerformanceCalculator.zip](https://raw.githubusercontent.com/GreenEnergyManagement/PerformanceCalculator/master/PerformanceCalculator.zip) file, unzip it to a folder of choice and execute PerformanceCalculator.exe to run the program.
 
 Much of the code in this app has been released from the Aquiloz Wind Power Prediction system which uses similar
 logic to calculate performance of forecasting time series.
