@@ -206,15 +206,16 @@ namespace PerformanceCalculator.View
             txtForecastColValueIndex.Text = "5";
             txtNormalizationValue.Text = "207000";
 
-            /*txtForecastPath.Text = @".\Data\ShS\2013";
-            txtObsevationsPath.Text = @".\Data\ShS\FarmProduction_ShS_2013.csv";
+            /*txtForecastPath.Text = @".\Data\Tervola\M8";
+            txtObsevationsPath.Text = @".\Data\Tervola\TervolaFarmProduction.csv";
             txtForecastColTimeIndex.Text = "1";
             txtForecastColValueIndex.Text = "5";
             forecastUnitType.SelectedIndex = 1;
             txtForecastColSeparator.Text = ",";
-            txtScope.Text = "0-23";
+            txtObservationColSeparator.Text = ",";
+            txtScope.Text = "0-6,13-36,48";
             obsevationsUnitType.SelectedIndex = 1;
-            txtNormalizationValue.Text = "316800";*/
+            txtNormalizationValue.Text = "30000";*/
         }
     }
 }
