@@ -19,27 +19,31 @@ namespace PerformanceCalculator
             string[] obsLines = File.ReadAllLines(file);
             var obsPowerInFarm = new SortedDictionary<UtcDateTime, double>();
             string dateTimePattern = string.Empty;
-            foreach (var line in obsLines.Skip(1)) // Skip the heading...
+            if (!obsLines[0].Contains(omd.ObservationSep)) throw new Exception("Observations series does not contain the char: '" + omd.ObservationSep + "' \ras column seperator. Open the document and check what \rdelimiter char is used to seperate the columns \rand specify this char in the Observations Column Seperator field.");
+            for (int i=1; i<obsLines.Length; i++) // Skip the heading...
             {
-                if(!line.Contains(omd.ObservationSep)) throw new Exception("Observations series does not contain the char: '"+omd.ObservationSep+"' \ras column seperator. Open the document and check what \rdelimiter char is used to seperate the columns \rand specify this char in the Observations Column Seperator field.");
+                var line = obsLines[i];
                 var cols = line.Split(omd.ObservationSep);
-                string timeStampStr = cols[omd.ObservationTimeIndex];
-                string valueStr = cols[omd.ObservationValueIndex];
-
-                //01.05.2014 13:00
-                if(string.IsNullOrEmpty(dateTimePattern)) dateTimePattern = UtcDateTime.GetDateTimePattern(timeStampStr);
-                if (timeStampStr.EndsWith("(b)")) continue; // skip local time, all time series should be in UTC....
-                DateTime timeStamp = DateTime.ParseExact(timeStampStr, dateTimePattern, (IFormatProvider)CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
-                var dateTime = UtcDateTime.CreateFromUnspecifiedDateTime(timeStamp);
-
-                valueStr = valueStr.Replace(',', '.');
-                double val;
-                if (double.TryParse(valueStr, NumberStyles.Float, CultureInfo.InvariantCulture, out val))
+                if (cols.Length > 1)
                 {
-                    if (omd.ObservationUnitType == "MW") val *= 1000;
-                    obsPowerInFarm.Add(dateTime, val);
+                    string timeStampStr = cols[omd.ObservationTimeIndex];
+                    string valueStr = cols[omd.ObservationValueIndex];
+
+                    //01.05.2014 13:00
+                    if (string.IsNullOrEmpty(dateTimePattern)) dateTimePattern = UtcDateTime.GetDateTimePattern(timeStampStr);
+                    if (timeStampStr.EndsWith("(b)")) continue; // skip local time, all time series should be in UTC....
+                    DateTime timeStamp = DateTime.ParseExact(timeStampStr, dateTimePattern, (IFormatProvider) CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                    var dateTime = UtcDateTime.CreateFromUnspecifiedDateTime(timeStamp);
+
+                    valueStr = valueStr.Replace(',', '.');
+                    double val;
+                    if (double.TryParse(valueStr, NumberStyles.Float, CultureInfo.InvariantCulture, out val))
+                    {
+                        if (omd.ObservationUnitType == "MW") val *= 1000;
+                        obsPowerInFarm.Add(dateTime, val);
+                    }
+                    else isNotPointingToANumber = true;
                 }
-                else isNotPointingToANumber = true;
             }
 
             if (isNotPointingToANumber && obsPowerInFarm.Count == 0) throw new Exception("The Observation Column Index Value is not pointing to a column which contains a double value. Change index value!");
@@ -97,46 +101,51 @@ namespace PerformanceCalculator
                     var dateTime = UtcDateTime.CreateFromUnspecifiedDateTime(timeStamp);
 
                     double val;
-                    if (double.TryParse(valueStr, NumberStyles.Float, CultureInfo.InvariantCulture, out val))
+                    if (!string.IsNullOrEmpty(valueStr))
                     {
-                        if (fmd.ForecastUnitType == "MW") val *= 1000;
-                        predPowerInFarm.Add(dateTime, val);
+                        if (double.TryParse(valueStr, NumberStyles.Float, CultureInfo.InvariantCulture, out val))
+                        {
+                            if (fmd.ForecastUnitType == "MW") val *= 1000;
+                            predPowerInFarm.Add(dateTime, val);
+                        }
+                        else isNotPointingToANumber = true;
                     }
-                    else isNotPointingToANumber = true;
-
                     lineNr++;
                 }
 
                 if (isNotPointingToANumber && predPowerInFarm.Count==0) throw new Exception("The Forecast Column Index Value is not pointing to a column which contains a double value. Change index value!");
                 var convertedPredPowerInFarm = ConvertTimeSeriesToHourlyResolution(predPowerInFarm);
 
-                UtcDateTime first = convertedPredPowerInFarm.Keys.First();
-                var firstTimePointInMonth = new UtcDateTime(first.Year, first.Month, 1);
-                
-
-                if (compareHoursInDay)
+                if (convertedPredPowerInFarm.Count > 0)
                 {
-                    // Split up into months
-                    UtcDateTime last = convertedPredPowerInFarm.Keys.Last();
-                    var firstTimePointInLastMonth = new UtcDateTime(last.Year, last.Month, 1);
-                    for (var time = firstTimePointInMonth; time.UtcTime <= firstTimePointInLastMonth.UtcTime; time = new UtcDateTime(time.UtcTime.AddMonths(1)))
+                    UtcDateTime first = convertedPredPowerInFarm.Keys.First();
+                    var firstTimePointInMonth = new UtcDateTime(first.Year, first.Month, 1);
+
+
+                    if (compareHoursInDay)
                     {
-                        if (!results.ContainsKey(time))
-                            results.TryAdd(time, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int)omd.NormalizationValue));
+                        // Split up into months
+                        UtcDateTime last = convertedPredPowerInFarm.Keys.Last();
+                        var firstTimePointInLastMonth = new UtcDateTime(last.Year, last.Month, 1);
+                        for (var time = firstTimePointInMonth; time.UtcTime <= firstTimePointInLastMonth.UtcTime; time = new UtcDateTime(time.UtcTime.AddMonths(1)))
+                        {
+                            if (!results.ContainsKey(time))
+                                results.TryAdd(time, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int) omd.NormalizationValue));
 
-                        HourlySkillScoreCalculator skillCalculator = results[time];
-                        var enumer = new UtcDateTimeEnumerator(time, new UtcDateTime(time.UtcTime.AddMonths(1)), TimeResolution.Hour);
-                        skillCalculator.AddContinousSerie(enumer, convertedPredPowerInFarm, obsPowerInFarm);
+                            HourlySkillScoreCalculator skillCalculator = results[time];
+                            var enumer = new UtcDateTimeEnumerator(time, new UtcDateTime(time.UtcTime.AddMonths(1)), TimeResolution.Hour);
+                            skillCalculator.AddContinousSerie(enumer, convertedPredPowerInFarm, obsPowerInFarm);
+                        }
                     }
-                }
-                else
-                {
-                    if (!results.ContainsKey(firstTimePointInMonth))
-                        results.TryAdd(firstTimePointInMonth, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int)omd.NormalizationValue));
+                    else
+                    {
+                        if (!results.ContainsKey(firstTimePointInMonth))
+                            results.TryAdd(firstTimePointInMonth, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int) omd.NormalizationValue));
 
-                    HourlySkillScoreCalculator skillCalculator = results[firstTimePointInMonth];
-                    var enumer = new UtcDateTimeEnumerator(first, convertedPredPowerInFarm.Keys.Last(), TimeResolution.Hour);
-                    skillCalculator.Add(enumer, convertedPredPowerInFarm, obsPowerInFarm, fmd.OffsetHoursAhead);
+                        HourlySkillScoreCalculator skillCalculator = results[firstTimePointInMonth];
+                        var enumer = new UtcDateTimeEnumerator(first, convertedPredPowerInFarm.Keys.Last(), TimeResolution.Hour);
+                        skillCalculator.Add(enumer, convertedPredPowerInFarm, obsPowerInFarm, fmd.OffsetHoursAhead);
+                    }
                 }
             }
 
@@ -154,6 +163,8 @@ namespace PerformanceCalculator
 
         private static SortedDictionary<UtcDateTime, double> ConvertTimeSeriesToHourlyResolution(SortedDictionary<UtcDateTime, double> series)
         {
+            if(series.Count==0) return new SortedDictionary<UtcDateTime, double>();
+
             var timePoints = series.Keys.Take(2).ToArray();
             TimeSpan span = timePoints[1].UtcTime - timePoints[0];
             int steps;
