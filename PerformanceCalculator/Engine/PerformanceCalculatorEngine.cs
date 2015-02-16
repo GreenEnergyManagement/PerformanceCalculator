@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using PerformanceCalculator.Engine;
 
 namespace PerformanceCalculator
 {
@@ -17,7 +18,7 @@ namespace PerformanceCalculator
 
             // 1. Load observations
             string[] obsLines = File.ReadAllLines(file);
-            var obsPowerInFarm = new SortedDictionary<UtcDateTime, double>();
+            var obsPowerInFarm = new SortedDictionary<UtcDateTime, double?>();
             string dateTimePattern = string.Empty;
             if (!obsLines[0].Contains(omd.ObservationSep)) throw new Exception("Observations series does not contain the char: '" + omd.ObservationSep + "' \ras column seperator. Open the document and check what \rdelimiter char is used to seperate the columns \rand specify this char in the Observations Column Seperator field.");
             for (int i=1; i<obsLines.Length; i++) // Skip the heading...
@@ -36,13 +37,21 @@ namespace PerformanceCalculator
                     var dateTime = UtcDateTime.CreateFromUnspecifiedDateTime(timeStamp);
 
                     valueStr = valueStr.Replace(',', '.');
-                    double val;
-                    if (double.TryParse(valueStr, NumberStyles.Float, CultureInfo.InvariantCulture, out val))
+                    if (!string.IsNullOrEmpty(valueStr))
                     {
-                        if (omd.ObservationUnitType == "MW") val *= 1000;
-                        obsPowerInFarm.Add(dateTime, val);
+                        double val;
+                        if (double.TryParse(valueStr, NumberStyles.Float, CultureInfo.InvariantCulture, out val))
+                        {
+                            if (omd.ObservationUnitType == "MW") val *= 1000;
+                            obsPowerInFarm.Add(dateTime, val);
+                        }
+                        else
+                        {
+                            if(i <= 3) isNotPointingToANumber = true;
+                            else obsPowerInFarm.Add(dateTime, null);
+                        }
                     }
-                    else isNotPointingToANumber = true;
+                    else obsPowerInFarm.Add(dateTime, null);
                 }
             }
 
@@ -50,7 +59,7 @@ namespace PerformanceCalculator
             
             
             // 2. Identify Time Resolution of obs series, if less than an hour, make it hourly avg.
-            obsPowerInFarm = ConvertTimeSeriesToHourlyResolution(obsPowerInFarm);
+            obsPowerInFarm = ConvertTimeSeriesToHourlyResolution(obsPowerInFarm.First().Key, obsPowerInFarm);
 
 
             // 3. Search forecastPath for forecast documents...
@@ -65,11 +74,13 @@ namespace PerformanceCalculator
             // the skill of forecasts at every 12:00 or 14:00 hour regardless of date. Instead of making this an
             // explicit setting in the view (which it should be ultimately), it is no supporting this case by
             // convention. This should be changed later for flexibility...
-            bool compareHoursInDay = files.Length == 1; 
+            bool compareHoursInDay = files.Length == 1;
             foreach (var fileInfo in files)
             {
                 isNotPointingToANumber = false;
-                var predPowerInFarm = new SortedDictionary<UtcDateTime, double>();
+                UtcDateTime? firstTimePoint = null;
+                UtcDateTime? firstPossibleHour = null;
+                var predPowerInFarm = new SortedDictionary<UtcDateTime, double?>();
                 var stream = fileInfo.OpenRead();
                 var reader = new StreamReader(stream);
                 int lineNr = -1;
@@ -78,11 +89,13 @@ namespace PerformanceCalculator
                     string line = reader.ReadLine();
                     if (lineNr == -1)
                     {
-                        if (!line.Contains(fmd.ForecastSep)) throw new Exception("Forecast series does not contain the char: '" + fmd.ForecastSep + "' \ras column seperator. Open a document and check what \rdelimiter char is used to seperate the columns \rand specify this char in the Forecasts Column Seperator field.");
+                        if (!line.Contains(fmd.ForecastSep))
+                            throw new Exception("Forecast series does not contain the char: '" + fmd.ForecastSep +
+                                                "' \ras column seperator. Open a document and check what \rdelimiter char is used to seperate the columns \rand specify this char in the Forecasts Column Seperator field.");
                         lineNr++;
                         continue;
                     }
-                    if(string.IsNullOrEmpty(line)) continue;
+                    if (string.IsNullOrEmpty(line)) continue;
 
                     var cols = line.Split(fmd.ForecastSep);
                     string timeStampStr = cols[fmd.ForecastTimeIndex];
@@ -100,6 +113,13 @@ namespace PerformanceCalculator
                     }
                     var dateTime = UtcDateTime.CreateFromUnspecifiedDateTime(timeStamp);
 
+                    if (lineNr == 1)
+                    {
+                        firstTimePoint = dateTime;
+                        var firstHour = dateTime.AddHours(1);
+                        firstPossibleHour = new UtcDateTime(firstHour.Year, firstHour.Month, firstHour.Day, firstHour.Hour);
+                    }
+
                     double val;
                     if (!string.IsNullOrEmpty(valueStr))
                     {
@@ -108,62 +128,63 @@ namespace PerformanceCalculator
                             if (fmd.ForecastUnitType == "MW") val *= 1000;
                             predPowerInFarm.Add(dateTime, val);
                         }
-                        else isNotPointingToANumber = true;
+                        else
+                        {
+                            if (lineNr <= 3) isNotPointingToANumber = true;
+                            else predPowerInFarm.Add(dateTime, null);
+                        }
                     }
+                    else predPowerInFarm.Add(dateTime, null);
                     lineNr++;
                 }
 
-                if (isNotPointingToANumber && predPowerInFarm.Count==0) throw new Exception("The Forecast Column Index Value is not pointing to a column which contains a double value. Change index value!");
-                var convertedPredPowerInFarm = ConvertTimeSeriesToHourlyResolution(predPowerInFarm);
-
-                if (convertedPredPowerInFarm.Count > 0)
+                if (isNotPointingToANumber && predPowerInFarm.Count == 0)
+                    throw new Exception("The Forecast Column Index Value is not pointing to a column which contains a double value. Change index value!");
+                if (!firstPossibleHour.HasValue) throw new Exception("The first possible forecast hour could not be determined. Please check forecast file: " + fileInfo.FullName);
+                if (!firstTimePoint.HasValue) throw new Exception("First time point in forecast file is not specified. Please check forecast file: " + fileInfo.FullName);
+                else
                 {
-                    UtcDateTime first = convertedPredPowerInFarm.Keys.First();
-                    var firstTimePointInMonth = new UtcDateTime(first.Year, first.Month, 1);
+                    var convertedPredPowerInFarm = ConvertTimeSeriesToHourlyResolution(firstPossibleHour.Value, predPowerInFarm);
 
-
-                    if (compareHoursInDay)
+                    if (convertedPredPowerInFarm.Count > 0)
                     {
-                        // Split up into months
-                        UtcDateTime last = convertedPredPowerInFarm.Keys.Last();
-                        var firstTimePointInLastMonth = new UtcDateTime(last.Year, last.Month, 1);
-                        for (var time = firstTimePointInMonth; time.UtcTime <= firstTimePointInLastMonth.UtcTime; time = new UtcDateTime(time.UtcTime.AddMonths(1)))
+                        UtcDateTime first = convertedPredPowerInFarm.Keys.First();
+                        var firstTimePointInMonth = new UtcDateTime(first.Year, first.Month, 1);
+
+                        if (compareHoursInDay)
                         {
-                            if (!results.ContainsKey(time))
-                                results.TryAdd(time, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int) omd.NormalizationValue));
+                            // Split up into months
+                            UtcDateTime last = convertedPredPowerInFarm.Keys.Last();
+                            var firstTimePointInLastMonth = new UtcDateTime(last.Year, last.Month, 1);
+                            for (var time = firstTimePointInMonth; time.UtcTime <= firstTimePointInLastMonth.UtcTime; time = new UtcDateTime(time.UtcTime.AddMonths(1)))
+                            {
+                                if (!results.ContainsKey(time))
+                                    results.TryAdd(time, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int) omd.NormalizationValue));
 
-                            HourlySkillScoreCalculator skillCalculator = results[time];
-                            var enumer = new UtcDateTimeEnumerator(time, new UtcDateTime(time.UtcTime.AddMonths(1)), TimeResolution.Hour);
-                            skillCalculator.AddContinousSerie(enumer, convertedPredPowerInFarm, obsPowerInFarm);
+                                HourlySkillScoreCalculator skillCalculator = results[time];
+                                var enumer = new UtcDateTimeEnumerator(time, new UtcDateTime(time.UtcTime.AddMonths(1)), TimeResolution.Hour);
+                                skillCalculator.AddContinousSerie(enumer, convertedPredPowerInFarm, obsPowerInFarm);
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (!results.ContainsKey(firstTimePointInMonth))
-                            results.TryAdd(firstTimePointInMonth, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int) omd.NormalizationValue));
+                        else
+                        {
+                            if (!results.ContainsKey(firstTimePointInMonth))
+                                results.TryAdd(firstTimePointInMonth, new HourlySkillScoreCalculator(new List<Turbine>(), scope, (int) omd.NormalizationValue));
 
-                        HourlySkillScoreCalculator skillCalculator = results[firstTimePointInMonth];
-                        var enumer = new UtcDateTimeEnumerator(first, convertedPredPowerInFarm.Keys.Last(), TimeResolution.Hour);
-                        skillCalculator.Add(enumer, convertedPredPowerInFarm, obsPowerInFarm, fmd.OffsetHoursAhead);
+                            HourlySkillScoreCalculator skillCalculator = results[firstTimePointInMonth];
+                            var enumer = new UtcDateTimeEnumerator(first, convertedPredPowerInFarm.Keys.Last(), TimeResolution.Hour);
+                            skillCalculator.Add(enumer, convertedPredPowerInFarm, obsPowerInFarm, fmd.OffsetHoursAhead);
+                        }
                     }
                 }
             }
 
-            /*Parallel.ForEach(times, t =>
-            {
-                var to = t.AddMonths(1);
-                HourlySkillScoreCalculator calc = DoTestPerformanceOnlinePowerCorrOnCalculatePowerForAllTurbinesWind(new UtcDateTime(t), new UtcDateTime(to), cfg, scope, ofWcTurbines, onWcTurbines, ofPcTurbines, onPcTurbines,
-                                                                                farm, weatherCorrection, stabHandler, selector, wakeCalculator, powerCorrection, cache, configCache,
-                                                                                mergeSettingsWeather: mergeSettingsWeather, mergeSettingsPower: mergeSettingsPower);
-                results.TryAdd(t, calc);
-            });*/
-
             return results;
         }
 
-        private static SortedDictionary<UtcDateTime, double> ConvertTimeSeriesToHourlyResolution(SortedDictionary<UtcDateTime, double> series)
+        private static SortedDictionary<UtcDateTime, double?> ConvertTimeSeriesToHourlyResolution(UtcDateTime firstPossibleHour, SortedDictionary<UtcDateTime, double?> series)
         {
-            if(series.Count==0) return new SortedDictionary<UtcDateTime, double>();
+            if(series.Count==0) return new SortedDictionary<UtcDateTime, double?>();
 
             var timePoints = series.Keys.Take(2).ToArray();
             TimeSpan span = timePoints[1].UtcTime - timePoints[0];
@@ -178,9 +199,6 @@ namespace PerformanceCalculator
             if (resolution == TimeResolutionType.Minute && steps == 10)
             {
                 // darn, typical scada resolution, we need to calc hourly avg...
-                var firstTimePoint = timePoints[0];
-                var firstHour = firstTimePoint.AddHours(1);
-                var firstPossibleHour = new UtcDateTime(firstHour.Year, firstHour.Month, firstHour.Day, firstHour.Hour);
                 var lastPossibleHour = series.Keys.Last();
                 lastPossibleHour = new UtcDateTime(lastPossibleHour.Year, lastPossibleHour.Month, lastPossibleHour.Day, lastPossibleHour.Hour);
                 
@@ -190,8 +208,7 @@ namespace PerformanceCalculator
             {
                 // darn, typical market resolution, we need to calc hourly avg...
                 var firstTimePoint = timePoints[0];
-                var firstHour = firstTimePoint.AddHours(1);
-                var firstPossibleHour = new UtcDateTime(firstHour.Year, firstHour.Month, firstHour.Day, firstHour.Hour);
+                if(firstTimePoint > firstPossibleHour) throw new Exception("First time point is greater than first possible hour, this is wrong, first time point must always be greater than first possible hour.");
                 var lastPossibleHour = series.Keys.Last();
                 if (lastPossibleHour.Minute > 0 || lastPossibleHour.Second > 0)
                 {
@@ -207,7 +224,7 @@ namespace PerformanceCalculator
 
                 return ProductionDataHelper.CalculateMarketResolutionAverage(firstTimePoint, firstPossibleHour, lastPossibleHour, TimeSpan.FromHours(1), span, series);
             }
-            return new SortedDictionary<UtcDateTime, double>();
+            return new SortedDictionary<UtcDateTime, double?>();
         }
     }
 }

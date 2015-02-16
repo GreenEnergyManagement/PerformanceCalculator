@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PerformanceCalculator
+namespace PerformanceCalculator.Engine
 {
     public static class ProductionDataHelper
     {
-        internal static SortedDictionary<UtcDateTime, double> CalculateMarketResolutionAverage(UtcDateTime firstTimePoint, UtcDateTime first, UtcDateTime last, TimeSpan marketResolution, TimeSpan dataResolution, SortedDictionary<UtcDateTime, double> prod)
+        internal static SortedDictionary<UtcDateTime, double?> CalculateMarketResolutionAverage(UtcDateTime firstTimePoint, UtcDateTime first, UtcDateTime last, TimeSpan marketResolution, TimeSpan dataResolution, SortedDictionary<UtcDateTime, double?> prod, bool isForecast=false)
         {
             int steps;
             TimeResolutionType timeResolutionType = dataResolution.ToTimeResolution(out steps);
@@ -20,7 +20,7 @@ namespace PerformanceCalculator
                 if (time >= first) timePoints.Add(time);
             } while (time >= first);
 
-            var resolutionSamples = new SortedDictionary<UtcDateTime, List<double>>();
+            var resolutionSamples = new SortedDictionary<UtcDateTime, List<double?>>();
             for (int index = 0; index < timePoints.Count; index++)
             {
                 if (index + 1 < timePoints.Count)
@@ -33,8 +33,8 @@ namespace PerformanceCalculator
                     {
                         if (prod.ContainsKey(utcDateTime))
                         {
-                            double production = prod[utcDateTime];
-                            if (!resolutionSamples.ContainsKey(point)) resolutionSamples.Add(point, new List<double>());
+                            double? production = prod[utcDateTime];
+                            if (!resolutionSamples.ContainsKey(point)) resolutionSamples.Add(point, new List<double?>());
                             resolutionSamples[point].Add(production);
                         }
                     }
@@ -48,8 +48,8 @@ namespace PerformanceCalculator
                     {
                         if (prod.ContainsKey(utcDateTime))
                         {
-                            double production = prod[utcDateTime];
-                            if (!resolutionSamples.ContainsKey(point)) resolutionSamples.Add(point, new List<double>());
+                            double? production = prod[utcDateTime];
+                            if (!resolutionSamples.ContainsKey(point)) resolutionSamples.Add(point, new List<double?>());
                             resolutionSamples[point].Add(production);
                         }
                     }
@@ -57,12 +57,30 @@ namespace PerformanceCalculator
             }
 
             int productionStepsInResolution = CalculateProductionStepsInResolution(marketResolution, dataResolution);
-            var avgProds = new SortedDictionary<UtcDateTime, double>();
+            var avgProds = new SortedDictionary<UtcDateTime, double?>();
 
             foreach (UtcDateTime dateTime in resolutionSamples.Keys)
             {
                 var prodInResolution = resolutionSamples[dateTime];
-                double avgPower = prodInResolution.Sum() / productionStepsInResolution;
+                // When calculating observed production, we always calculate the average as sum devided by time steps in period (resolution)
+                double? avgPower;
+                if (!isForecast) avgPower = prodInResolution.Sum()/productionStepsInResolution;
+                else
+                {   // When calculating predicted production, we always calculate the pure average
+                    double sum = 0;
+                    int nrOfObsInPeriod = 0;
+                    foreach (double? p in prodInResolution)
+                    {
+                        if (p.HasValue)
+                        {
+                            nrOfObsInPeriod++;
+                            sum += p.Value;
+                        }
+                    }
+
+                    if (nrOfObsInPeriod > 0) avgPower = sum/nrOfObsInPeriod;
+                    else avgPower = null;
+                }
                 avgProds.Add(dateTime, avgPower);
             }
             return avgProds;

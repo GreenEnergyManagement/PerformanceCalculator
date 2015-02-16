@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using PerformanceCalculator.SkillScore;
 
 namespace PerformanceCalculator
 {
@@ -41,8 +42,8 @@ namespace PerformanceCalculator
         }
 
         public void Add(UtcDateTimeEnumerator enumer,
-            SortedDictionary<UtcDateTime, double> sumPowerInParkAtTimeTAtTimeT,
-            SortedDictionary<UtcDateTime, double> sumObsPowerInParkAtTimeT,
+            SortedDictionary<UtcDateTime, double?> sumPowerInParkAtTimeTAtTimeT,
+            SortedDictionary<UtcDateTime, double?> sumObsPowerInParkAtTimeT,
             int hoursAheadOffset)
         {
             nrOfRegisteredForecastTimePoints++;
@@ -51,12 +52,16 @@ namespace PerformanceCalculator
             {
                 if (sumPowerInParkAtTimeTAtTimeT.ContainsKey(time) && sumObsPowerInParkAtTimeT.ContainsKey(time))
                 {
-                    if (skillScoreHourBins.ContainsKey(Any)) skillScoreHourBins[Any].Register(sumObsPowerInParkAtTimeT[time], sumPowerInParkAtTimeTAtTimeT[time]);
-
-                    int hourAhead = index;
-                    if (skillScoreHourBins.ContainsKey(hourAhead))
+                    if (sumPowerInParkAtTimeTAtTimeT[time].HasValue && sumObsPowerInParkAtTimeT[time].HasValue)
                     {
-                        skillScoreHourBins[hourAhead].Register(sumObsPowerInParkAtTimeT[time], sumPowerInParkAtTimeTAtTimeT[time]);
+                        if (skillScoreHourBins.ContainsKey(Any)) 
+                            skillScoreHourBins[Any].Register(sumObsPowerInParkAtTimeT[time].Value, sumPowerInParkAtTimeTAtTimeT[time].Value);
+
+                        int hourAhead = index;
+                        if (skillScoreHourBins.ContainsKey(hourAhead))
+                        {
+                            skillScoreHourBins[hourAhead].Register(sumObsPowerInParkAtTimeT[time].Value, sumPowerInParkAtTimeTAtTimeT[time].Value);
+                        }
                     }
                 }
                 index++;
@@ -140,7 +145,7 @@ namespace PerformanceCalculator
             }
         }
 
-        public void AddContinousSerie(UtcDateTimeEnumerator enumer, SortedDictionary<UtcDateTime, double> predictionFrames, SortedDictionary<UtcDateTime, double> productionFrames)
+        public void AddContinousSerie(UtcDateTimeEnumerator enumer, SortedDictionary<UtcDateTime, double?> predictionFrames, SortedDictionary<UtcDateTime, double?> productionFrames)
         {
             Dictionary<int, int> hourScope = Scope.ToDictionary(e => e, e => e);
             nrOfRegisteredForecastTimePoints++;
@@ -157,10 +162,11 @@ namespace PerformanceCalculator
                     break; // If we have nothing for the ten first hours then this forecast point is broken and should not be taken into account...
                 }
 
-                if (predictionFrames.ContainsKey(currentTime) && productionFrames.ContainsKey(currentTime) && !predictionFrames[currentTime].AboutEqual(prevPower))
+                if (predictionFrames.ContainsKey(currentTime) && productionFrames.ContainsKey(currentTime)
+                    && predictionFrames[currentTime].HasValue && !productionFrames[currentTime].HasValue)
                 {
-                    double power = predictionFrames[currentTime];
-                    double obsPower = productionFrames[currentTime];
+                    double power = predictionFrames[currentTime].Value;
+                    double obsPower = productionFrames[currentTime].Value;
 
                     sumPower += power;
                     sumObsPower += obsPower;

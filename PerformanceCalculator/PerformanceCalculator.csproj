@@ -222,6 +222,26 @@
     <None Include="Data\SampleObservations.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141202.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141203.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141204.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141205.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141206.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141207.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141208.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141209.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141210.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141211.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141212.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141213.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141214.1100.csv" />
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141130.1100.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Data\Validation\DA_Forecasts_Reinsbuettel\DayAheadReinsbuettel_20141201.1100.csv" />
+    <None Include="Data\Validation\HistDaten_Reinsbuettel_2014_utc.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

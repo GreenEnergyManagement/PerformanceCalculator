@@ -8,6 +8,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using PerformanceCalculator.SkillScore;
 
 namespace PerformanceCalculator.View
 {
@@ -200,22 +201,22 @@ namespace PerformanceCalculator.View
 
         private void FillGuiWithExampleData(object sender, RoutedEventArgs e)
         {
-            txtForecastPath.Text = @".\Data\SampleForecasts";
+            /*txtForecastPath.Text = @".\Data\SampleForecasts";
             txtObsevationsPath.Text = @".\Data\SampleObservations.csv";
             txtForecastColTimeIndex.Text = "1";
             txtForecastColValueIndex.Text = "5";
-            txtNormalizationValue.Text = "207000";
+            txtNormalizationValue.Text = "207000";*/
 
-            /*txtForecastPath.Text = @".\Data\Tervola\M8";
-            txtObsevationsPath.Text = @".\Data\Tervola\TervolaFarmProduction.csv";
+            txtForecastPath.Text = @".\Data\Validation\DA_Forecasts_Reinsbuettel";
+            txtObsevationsPath.Text = @".\Data\Validation\HistDaten_Reinsbuettel_2014_utc.csv";
             txtForecastColTimeIndex.Text = "1";
             txtForecastColValueIndex.Text = "5";
             forecastUnitType.SelectedIndex = 1;
-            txtForecastColSeparator.Text = ",";
-            txtObservationColSeparator.Text = ",";
-            txtScope.Text = "0-6,13-36,48";
-            obsevationsUnitType.SelectedIndex = 1;
-            txtNormalizationValue.Text = "30000";*/
+            txtForecastColSeparator.Text = ";";
+            txtObservationColSeparator.Text = ";";
+            txtScope.Text = "0-23";
+            obsevationsUnitType.SelectedIndex = 0;
+            txtNormalizationValue.Text = "13500";
         }
     }
 }

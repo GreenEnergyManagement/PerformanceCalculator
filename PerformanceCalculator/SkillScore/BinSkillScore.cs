@@ -1,6 +1,6 @@
 using System;
 
-namespace PerformanceCalculator
+namespace PerformanceCalculator.SkillScore
 {
     public class BinSkillScore
     {
@@ -36,25 +36,29 @@ namespace PerformanceCalculator
 
         public void Register(double actual, double forecast)
         {
-            if (actual == 0) return;
             NrOfOccurrences++;
 
             double diff = actual - forecast;
             double absDiff = Math.Abs(diff);
             double sqDiff = diff * diff;
 
-            double residual;
-            if (InstalledCapacity > 0) residual = diff / InstalledCapacity;
-            else residual = diff / actual;
+            double normalizedDiff;
+            if (InstalledCapacity > 0) normalizedDiff = diff/InstalledCapacity;
+            else
+            {   // Normalizaion against observed should never happen. All normalization should happen against a fixed number
+                // or some observed average over a period. Otherwise it is no normalization.
+                if (Math.Abs(actual) < 0.00) return;  // This will possibly end in divide by zero, or a very small number will impact the end result a lot. Skip observation.
+                normalizedDiff = diff / actual;
+            }
 
-            double absResidual = Math.Abs(residual);
-            double sqResidual = residual * residual;
+            double absNormalizedDiff = Math.Abs(normalizedDiff);
+            double sqResidual = normalizedDiff * normalizedDiff;
 
             SumDiff += diff;
             SumAbsDiff += absDiff;
             SumSqDiff += sqDiff;
-            SumResidualError += residual;
-            SumAbsResidualError += absResidual;
+            SumResidualError += normalizedDiff;
+            SumAbsResidualError += absNormalizedDiff;
             SumSqResidualError += sqResidual;
         }
 
