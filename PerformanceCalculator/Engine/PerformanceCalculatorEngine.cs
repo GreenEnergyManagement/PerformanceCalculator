@@ -113,7 +113,7 @@ namespace PerformanceCalculator
                     }
                     var dateTime = UtcDateTime.CreateFromUnspecifiedDateTime(timeStamp);
 
-                    if (lineNr == 1)
+                    if (lineNr == 0)
                     {
                         firstTimePoint = dateTime;
                         var firstHour = dateTime.AddHours(1);
@@ -209,6 +209,26 @@ namespace PerformanceCalculator
                 // darn, typical market resolution, we need to calc hourly avg...
                 var firstTimePoint = timePoints[0];
                 if(firstTimePoint > firstPossibleHour) throw new Exception("First time point is greater than first possible hour, this is wrong, first time point must always be greater than first possible hour.");
+                var lastPossibleHour = series.Keys.Last();
+                if (lastPossibleHour.Minute > 0 || lastPossibleHour.Second > 0)
+                {
+                    lastPossibleHour = lastPossibleHour.AddHours(-1);
+                    lastPossibleHour = new UtcDateTime(lastPossibleHour.Year, lastPossibleHour.Month, lastPossibleHour.Day, lastPossibleHour.Hour);
+                }
+                /*var enumer = new UtcDateTimeEnumerator(firstPossibleHour, lastPossibleHour, TimeResolution.Hour);
+                foreach (var time in enumer)
+                {
+                    // Should always contain time if time series is in UTC. If not, then you are doing something we do not recommend.
+                    if (series.ContainsKey(time)) Console.WriteLine(time.UtcTime.ToString(dateTimePattern, CultureInfo.InvariantCulture) + ";" + series[time]); 
+                }*/
+
+                return ProductionDataHelper.CalculateMarketResolutionAverage(firstTimePoint, firstPossibleHour, lastPossibleHour, TimeSpan.FromHours(1), span, series);
+            }
+            if (resolution == TimeResolutionType.Minute && steps == 30)
+            {
+                // darn, typical market resolution, we need to calc hourly avg...
+                var firstTimePoint = timePoints[0];
+                if (firstTimePoint > firstPossibleHour) throw new Exception("First time point is greater than first possible hour, this is wrong, first time point must always be greater than first possible hour.");
                 var lastPossibleHour = series.Keys.Last();
                 if (lastPossibleHour.Minute > 0 || lastPossibleHour.Second > 0)
                 {

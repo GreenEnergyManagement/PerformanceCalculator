@@ -201,13 +201,13 @@ namespace PerformanceCalculator.View
 
         private void FillGuiWithExampleData(object sender, RoutedEventArgs e)
         {
-            /*txtForecastPath.Text = @".\Data\SampleForecasts";
+            txtForecastPath.Text = @".\Data\SampleForecasts";
             txtObsevationsPath.Text = @".\Data\SampleObservations.csv";
             txtForecastColTimeIndex.Text = "1";
             txtForecastColValueIndex.Text = "5";
-            txtNormalizationValue.Text = "207000";*/
+            txtNormalizationValue.Text = "207000";
 
-            txtForecastPath.Text = @".\Data\Validation\DA_Forecasts_Reinsbuettel";
+            /*txtForecastPath.Text = @".\Data\Validation\DA_Forecasts_Reinsbuettel";
             txtObsevationsPath.Text = @".\Data\Validation\HistDaten_Reinsbuettel_2014_utc.csv";
             txtForecastColTimeIndex.Text = "1";
             txtForecastColValueIndex.Text = "5";
@@ -216,7 +216,7 @@ namespace PerformanceCalculator.View
             txtObservationColSeparator.Text = ";";
             txtScope.Text = "0-23";
             obsevationsUnitType.SelectedIndex = 0;
-            txtNormalizationValue.Text = "13500";
+            txtNormalizationValue.Text = "13500";*/
         }
     }
 }
