@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace PerformanceCalculator
 {
@@ -33,5 +34,43 @@ namespace PerformanceCalculator
         {
             return Math.Round(d, digits);
         }
+
+        public static string ToPrintableFormat(this double value, DecimalSeperator decimalSeperator = DecimalSeperator.Dot)
+        {
+            string val = string.Empty;
+            if (!double.IsInfinity(value) /*&& (value > 0.0 || value < 0.0)*/) val = value.ToString("0.000", CultureInfo.InvariantCulture);
+            if (decimalSeperator == DecimalSeperator.Comma) val = val.Replace(".", ",");
+
+            return val;
+        }
+
+        public static string ToPrintableFormat(this double? value, DecimalSeperator decimalSeperator = DecimalSeperator.Dot)
+        {
+            string val = string.Empty;
+            if (value.HasValue && !double.IsInfinity(value.Value)) val = value.Value.ToString("0.000", CultureInfo.InvariantCulture);
+            if (decimalSeperator == DecimalSeperator.Comma) val = val.Replace(".", ",");
+
+            return val;
+        }
+
+        public static string ToPrintableFormat(this double value, string doubleFormat)
+        {
+            string val = string.Empty;
+            if (!double.IsInfinity(value) /*&& (value > 0.0 || value < 0.0)*/) val = value.ToString(doubleFormat, CultureInfo.InvariantCulture);
+            return val;
+        }
+
+        public static string ToPrintableFormat(this double? value, string doubleFormat)
+        {
+            string val = string.Empty;
+            if (value.HasValue && !double.IsInfinity(value.Value)) val = value.Value.ToString(doubleFormat, CultureInfo.InvariantCulture);
+            return val;
+        }
+    }
+
+    public enum DecimalSeperator
+    {
+        Comma,
+        Dot
     }
 }

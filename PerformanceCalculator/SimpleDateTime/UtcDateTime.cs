@@ -288,6 +288,7 @@ namespace PerformanceCalculator
         /// <returns></returns>
         public static string GetDateTimePattern(string timeStampStr)
         {
+            timeStampStr = timeStampStr.Trim();
             string[] dateAndTimeParts = timeStampStr.Split(' ');
             bool hasTimeSeperator = false;
             if (dateAndTimeParts.Length == 1)
@@ -295,7 +296,7 @@ namespace PerformanceCalculator
                 dateAndTimeParts = timeStampStr.Split('T');
                 hasTimeSeperator = true;
             }
-            
+
             string datePart = dateAndTimeParts[0];
             string timePart = dateAndTimeParts[1];
             string firstPart = datePart.Substring(0, 5);
@@ -311,7 +312,7 @@ namespace PerformanceCalculator
                 if (Char.IsNumber(c)) number++;
                 else
                 {
-                    if (seps.Any(sep => sep == c)) {deliminator = c;}
+                    if (seps.Any(sep => sep == c)) { deliminator = c; }
                     break;
                 }
             }
@@ -320,7 +321,7 @@ namespace PerformanceCalculator
             if (hasTimeSeperator) t = "T";
 
             string z = string.Empty;
-            if (timeStampStr.EndsWith("Z")) z = "Z";
+            if (timeStampStr.EndsWith("Z", StringComparison.InvariantCultureIgnoreCase)) z = "Z";
 
             string timePattern = string.Empty;
             if (timePart.Length < 3) timePattern = "HH";
@@ -337,6 +338,11 @@ namespace PerformanceCalculator
             else
             {   // Some sort of little endian format is used
                 pattern = "dd" + deliminator + "MM" + deliminator + "yyyy" + t + timePattern + z;
+                DateTime timeStampFormatTest;
+                if (!DateTime.TryParseExact(timeStampStr, pattern, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out timeStampFormatTest))
+                {
+                    pattern = "MM" + deliminator + "dd" + deliminator + "yyyy" + t + timePattern + z;
+                }
             }
 
             return pattern;

@@ -163,7 +163,7 @@ namespace PerformanceCalculator
                 }
 
                 if (predictionFrames.ContainsKey(currentTime) && productionFrames.ContainsKey(currentTime)
-                    && predictionFrames[currentTime].HasValue && !productionFrames[currentTime].HasValue)
+                    && predictionFrames[currentTime].HasValue && productionFrames[currentTime].HasValue)
                 {
                     double power = predictionFrames[currentTime].Value;
                     double obsPower = productionFrames[currentTime].Value;
